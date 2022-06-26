@@ -3,8 +3,8 @@ using FilmesAPI.Models;
 using FilmesAPI.Src.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace FilmesAPI.Controllers
 {
@@ -21,11 +21,11 @@ namespace FilmesAPI.Controllers
       }
 
       [HttpGet]
-      public IActionResult GetFilmes()
+      public async Task<IActionResult> GetFilmes()
       {
          try
          {
-            var filmes = Fcontexto.FILME.ToList();
+            var filmes = await Fcontexto.FILME.ToListAsync();
 
             if (filmes.Count > 0)
                FObjRetorno = RetornoUtils.Instancia().RetornoOk(filmes);
@@ -41,11 +41,11 @@ namespace FilmesAPI.Controllers
       }
 
       [HttpGet("{id}")]
-      public IActionResult GetFilmeById(int id)
+      public async Task<IActionResult> GetFilmeById(int id)
       {
          try
          {
-            var filme = Fcontexto.FILME.FirstOrDefault(filme => filme.Id == id);
+            var filme = await Fcontexto.FILME.FirstOrDefaultAsync(filme => filme.Id == id);
 
             if (filme != null)
             {
@@ -67,13 +67,13 @@ namespace FilmesAPI.Controllers
       }
 
       [HttpPost]
-      public IActionResult AddFilme([FromBody] Filme Filme)
+      public async Task<IActionResult> AddFilme([FromBody] Filme Filme)
       {
          try
          {
             Fcontexto.FILME.Add(Filme);
-            Fcontexto.SaveChanges();
-            
+            await Fcontexto.SaveChangesAsync();
+
             return new CreatedResult(nameof(GetFilmeById), Filme);
          }
          catch
@@ -83,16 +83,16 @@ namespace FilmesAPI.Controllers
       }
 
       [HttpDelete]
-      public IActionResult DeleteFilmeById([FromQuery] int id)
+      public async Task<IActionResult> DeleteFilmeById([FromQuery] int id)
       {
          try
          {
-            var filme = Fcontexto.FILME.FirstOrDefault(filme => filme.Id == id);
+            var filme = await Fcontexto.FILME.FirstOrDefaultAsync(filme => filme.Id == id);
 
             if (filme != null)
             {
                Fcontexto.FILME.Remove(filme);
-               Fcontexto.SaveChanges();
+               await Fcontexto.SaveChangesAsync();
 
                return new NoContentResult();
             }

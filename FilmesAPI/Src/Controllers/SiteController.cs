@@ -1,11 +1,10 @@
 ﻿using EF_Core_Postgre.Src.Services;
-using FilmesAPI.Models;
 using FilmesAPI.Src.Models;
 using FilmesAPI.Src.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace FilmesAPI.Controllers
 {
@@ -22,11 +21,11 @@ namespace FilmesAPI.Controllers
       }
 
       [HttpGet]
-      public IActionResult GetSites()
+      public async Task<IActionResult> GetSites()
       {
          try
          {
-            var sites = Fcontexto.SITE.ToList();
+            var sites = await Fcontexto.SITE.ToListAsync();
 
             if (sites.Count > 0)
                FObjRetorno = RetornoUtils.Instancia().RetornoOk(sites);
@@ -42,11 +41,11 @@ namespace FilmesAPI.Controllers
       }
 
       [HttpGet("{id}")]
-      public IActionResult GetSiteById(int id)
+      public async Task<IActionResult> GetSiteById(int id)
       {
          try
          {
-            var site = Fcontexto.SITE.FirstOrDefault(site => site.Id == id);
+            var site = await Fcontexto.SITE.FirstOrDefaultAsync(site => site.Id == id);
 
             if (site != null)
             {
@@ -68,18 +67,18 @@ namespace FilmesAPI.Controllers
       }
 
       [HttpPost]
-      public IActionResult AddSite([FromBody] Site Site)
+      public async Task<IActionResult> AddSite([FromBody] Site Site)
       {
          try
          {
             string url = Site.url;
 
-            var site = Fcontexto.SITE.FirstOrDefault(site => site.url == url);
+            var site = await Fcontexto.SITE.FirstOrDefaultAsync(site => site.url == url);
 
             if (site == null)
             {
                Fcontexto.SITE.Add(Site);
-               Fcontexto.SaveChanges();
+               await Fcontexto.SaveChangesAsync();
 
                return new CreatedResult(nameof(GetSiteById), Site);
             }
@@ -103,16 +102,16 @@ namespace FilmesAPI.Controllers
       }
 
       [HttpDelete]
-      public IActionResult DeleteSiteById([FromQuery] int id)
+      public async Task<IActionResult> DeleteSiteById([FromQuery] int id)
       {
          try
          {
-            var site = Fcontexto.SITE.FirstOrDefault(site => site.Id == id);
+            var site = await Fcontexto.SITE.FirstOrDefaultAsync(site => site.Id == id);
 
             if (site != null)
             {
                Fcontexto.SITE.Remove(site);
-               Fcontexto.SaveChanges();
+               await Fcontexto.SaveChangesAsync();
 
                return new NoContentResult();
             }
