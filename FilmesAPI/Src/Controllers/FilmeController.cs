@@ -1,9 +1,11 @@
 ﻿using EF_Core_Postgre.Src.Services;
 using FilmesAPI.Models;
+using FilmesAPI.Src.Services;
 using FilmesAPI.Src.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace FilmesAPI.Controllers
@@ -12,7 +14,7 @@ namespace FilmesAPI.Controllers
    [Route("[controller]")]
    public class FilmeController
    {
-      public Contexto Fcontexto { get; set; }
+      private Contexto Fcontexto { get; set; }
       private object FObjRetorno { get; set; }
 
       public FilmeController()
@@ -25,7 +27,7 @@ namespace FilmesAPI.Controllers
       {
          try
          {
-            var filmes = await Fcontexto.FILME.ToListAsync();
+            List<Filme> filmes = await FilmeService.Instancia().GetFilmes(Fcontexto);
 
             if (filmes.Count > 0)
                FObjRetorno = RetornoUtils.Instancia().RetornoOk(filmes);
@@ -45,7 +47,7 @@ namespace FilmesAPI.Controllers
       {
          try
          {
-            var filme = await Fcontexto.FILME.FirstOrDefaultAsync(filme => filme.Id == id);
+            var filme = await FilmeService.Instancia().GetFilmeById(id, Fcontexto);
 
             if (filme != null)
             {
@@ -71,13 +73,14 @@ namespace FilmesAPI.Controllers
       {
          try
          {
-            Fcontexto.FILME.Add(Filme);
-            await Fcontexto.SaveChangesAsync();
+            await FilmeService.Instancia().AddFilme(Filme, Fcontexto);
 
+            Console.WriteLine(Filme.titulo);
             return new CreatedResult(nameof(GetFilmeById), Filme);
          }
-         catch
+         catch (Exception e)
          {
+            Console.WriteLine(e.Message);
             return new StatusCodeResult(StatusCodes.Status500InternalServerError);
          }
       }
@@ -87,13 +90,10 @@ namespace FilmesAPI.Controllers
       {
          try
          {
-            var filme = await Fcontexto.FILME.FirstOrDefaultAsync(filme => filme.Id == id);
+            var filme = await FilmeService.Instancia().DeleteFilmeById(id, Fcontexto);
 
             if (filme != null)
             {
-               Fcontexto.FILME.Remove(filme);
-               await Fcontexto.SaveChangesAsync();
-
                return new NoContentResult();
             }
             return new NotFoundResult();

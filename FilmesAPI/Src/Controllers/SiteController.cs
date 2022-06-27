@@ -1,9 +1,10 @@
 ﻿using EF_Core_Postgre.Src.Services;
 using FilmesAPI.Src.Models;
+using FilmesAPI.Src.Services;
 using FilmesAPI.Src.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System;
 using System.Threading.Tasks;
 
 namespace FilmesAPI.Controllers
@@ -12,7 +13,7 @@ namespace FilmesAPI.Controllers
    [Route("[controller]")]
    public class SiteController
    {
-      public Contexto Fcontexto { get; set; }
+      private Contexto Fcontexto { get; set; }
       private object FObjRetorno { get; set; }
 
       public SiteController()
@@ -25,9 +26,9 @@ namespace FilmesAPI.Controllers
       {
          try
          {
-            var sites = await Fcontexto.SITE.ToListAsync();
+            object sites = await SiteService.Instancia().GetSites(Fcontexto);
 
-            if (sites.Count > 0)
+            if (sites != null)
                FObjRetorno = RetornoUtils.Instancia().RetornoOk(sites);
             else
                FObjRetorno = RetornoUtils.Instancia().RetornoMensagem("Não há registros para listar");
@@ -45,7 +46,7 @@ namespace FilmesAPI.Controllers
       {
          try
          {
-            var site = await Fcontexto.SITE.FirstOrDefaultAsync(site => site.Id == id);
+            object site = await SiteService.Instancia().GetSiteById(id, Fcontexto);
 
             if (site != null)
             {
@@ -71,14 +72,11 @@ namespace FilmesAPI.Controllers
       {
          try
          {
-            string url = Site.url;
-
-            var site = await Fcontexto.SITE.FirstOrDefaultAsync(site => site.url == url);
+            object site = await SiteService.Instancia().GetSiteByUrl(Site.url, Fcontexto);
 
             if (site == null)
             {
-               Fcontexto.SITE.Add(Site);
-               await Fcontexto.SaveChangesAsync();
+               await SiteService.Instancia().AddSite(Site, Fcontexto);
 
                return new CreatedResult(nameof(GetSiteById), Site);
             }
@@ -95,8 +93,9 @@ namespace FilmesAPI.Controllers
 
             return new ConflictObjectResult(FObjRetorno);
          }
-         catch
+         catch (Exception e)
          {
+            Console.WriteLine(e.Message);
             return new StatusCodeResult(StatusCodes.Status500InternalServerError);
          }
       }
@@ -106,13 +105,10 @@ namespace FilmesAPI.Controllers
       {
          try
          {
-            var site = await Fcontexto.SITE.FirstOrDefaultAsync(site => site.Id == id);
+            object site = await SiteService.Instancia().DeleteSiteById(id, Fcontexto);
 
             if (site != null)
             {
-               Fcontexto.SITE.Remove(site);
-               await Fcontexto.SaveChangesAsync();
-
                return new NoContentResult();
             }
             return new NotFoundResult();
